@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList } from 'react-native';
+import { StyleSheet, Text, View, FlatList , TouchableOpacity } from 'react-native';
 import nj from "@d4c/numjs"
-import math from math
+import * as math from 'mathjs'
 
 export default class CreateScreen extends React.Component{
 
@@ -16,7 +16,7 @@ export default class CreateScreen extends React.Component{
       input_vector : [],
       output_vector : [],
       gates : {
-        'h'  : nj.array([[1/np.sqrt(2),1/nj.sqrt(2)] , [1/nj.sqrt(2),-1/nj.sqrt(2)]]),
+        'h'  : nj.array([[1/nj.sqrt(2),1/nj.sqrt(2)] , [1/nj.sqrt(2),-1/nj.sqrt(2)]]),
         'cnt' : nj.array([[1,0,0,0], [0,1,0,0] , [0,0,0,1] , [0,0,1,0]]),
         'icnt': nj.array([[1,0,0,0] , [0,0,0,1] , [0,0,1,0], [0,1,0,0]]),
         'x'  : nj.array([[0,1] , [1,0]]),
@@ -141,14 +141,14 @@ export default class CreateScreen extends React.Component{
         circuit_matrix = column_matrix[i]
       }
       else{
-          circuit_matrix = np.dot(circuit_matrix , column_matrix[i])
+          circuit_matrix = nj.dot(circuit_matrix , column_matrix[i])
       }
     }
     this.state.setState({circuit_matrix : circuit_matrix})
   }
 
   getInputVector = () => {
-    input_vector = np.array([1,0])
+    input_vector = nj.array([1,0])
     for (let i = 0; i < this.state.q_regs -1; i++) {
       input_vector = nj.kron(input_vector , nj.array([1,0]) )
     }
@@ -164,7 +164,16 @@ export default class CreateScreen extends React.Component{
   render(){
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <View>
+        <Text>{this.state.q_circuit}</Text>
+        <TouchableOpacity onPress={() => {
+          this.addGate('h' , 1, this.state.q_circuit[0].length -1)
+        }}>
+          <View style={styles.gateButton}>
+            <Text style={styles.gateButtonText}>H</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
   }
@@ -177,4 +186,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  gateButton : {
+    borderWidth : 2,
+    backgroundColor : 'teal',
+    paddingHorizontal : 40,
+    paddingVertical : 20
+  },
+  gateButtonText : {
+    fontSize : 20,
+    color : 'white'
+  }
 });
