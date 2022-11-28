@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList , TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList , TouchableOpacity , TextInput } from 'react-native';
 import nj from "@d4c/numjs"
 import * as math from 'mathjs'
+import { typeOf } from 'mathjs';
 
 export default class CreateScreen extends React.Component{
 
@@ -16,18 +17,18 @@ export default class CreateScreen extends React.Component{
       input_vector : [],
       output_vector : [],
       gates : {
-        'h'  : nj.array([[1/nj.sqrt(2),1/nj.sqrt(2)] , [1/nj.sqrt(2),-1/nj.sqrt(2)]]),
-        'cnt' : nj.array([[1,0,0,0], [0,1,0,0] , [0,0,0,1] , [0,0,1,0]]),
-        'icnt': nj.array([[1,0,0,0] , [0,0,0,1] , [0,0,1,0], [0,1,0,0]]),
-        'x'  : nj.array([[0,1] , [1,0]]),
-        'z'  : nj.array([[1,0] , [0,-1]]),
-        'swt' : nj.array([[1,0,0,0] , [0,0,1,0] , [0,1,0,0] , [0,0,0,1]]),
-        's'  : nj.array([[1,0] , [0, math.i]]),
-        't'  : nj.array([[1,0] , [0 , nj.exp((math.i*nj.pi)/4 )]]),
-        'czt' : nj.array([[1,0,0,0], [0,1,0,0] , [0,0,1 ,0] , [0,0,0,-1]]),
-        'iczt': nj.array([[1,0,0,0], [0,1,0,0] , [0,0,1 ,0] , [0,0,0,-1]]),
-        'y'  : nj.array([[0,-math.i] , [math.i,0]]),
-        'i'  : nj.array([[1,0] , [0,1]])
+        'h'  : [[0.7,0.7] , [0.7,-0.7]],
+        'cnt' : [[1,0,0,0], [0,1,0,0] , [0,0,0,1] , [0,0,1,0]],
+        'icnc': [[1,0,0,0] , [0,0,0,1] , [0,0,1,0], [0,1,0,0]],
+        'x'  : [[0,1] , [1,0]],
+        'z'  : [[1,0] , [0,-1]],
+        'swt' : [[1,0,0,0] , [0,0,1,0] , [0,1,0,0] , [0,0,0,1]],
+        's'  : [[1,0] , [0, math.complex(0,1)]],
+        't'  : [[1,0] , [0 , math.exp((math.complex(0,3.14/4)) )]],
+        'czt' : [[1,0,0,0], [0,1,0,0] , [0,0,1 ,0] , [0,0,0,-1]],
+        'iczc': [[1,0,0,0], [0,1,0,0] , [0,0,1 ,0] , [0,0,0,-1]],
+        'y'  : [[0,math.complex(0,-1)] , [math.complex(0,1),0]],
+        'i'  : [[1,0] , [0,1]]
     }
 
     }
@@ -42,6 +43,8 @@ export default class CreateScreen extends React.Component{
     for (let i = 0; i < this.state.q_regs; i++) {
       q_circuit.push(['i'])
     }
+    this.setState({q_circuit})
+    this.setState({circuit_matrix : []})
   }
 
   getInputData = () => {
@@ -77,7 +80,7 @@ export default class CreateScreen extends React.Component{
       q_circuit[reg_no][pos] = gate
 
     }
-    if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') || reg_no == qreg_no-1)){
+    if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') && reg_no == qreg_no-1)){
         console.log('This gate cannot be applied at this register.')
     }
     for (let i = 0; i < q_circuit[reg_no].length; i++) {
@@ -111,40 +114,45 @@ export default class CreateScreen extends React.Component{
       }
     }
     this.setState({q_circuit : q_circuit})
+    this.getMatrix()
   }
   
   getMatrix = () => {
-    q_circuit = this.state.q_circuit
-    column_matrix = []
-    for (let i = 0; i < q_circuit[0].length; i++) {
-      tensor_product = 'temp'
-      for (let j = 0; j < q_circuit.length; i++){
-        if( (j != len(q_circuit) - 1 && (q_circuit[j + 1][i] == 'cnt' || q_circuit[j + 1][i] == 'czt' || q_circuit[j + 1][i] == 'swt')) || (j != 0 && (q_circuit[j-1][i] == 'icnt' ||  q_circuit[j-1][i] == 'iczt'))){
+    let q_circuit = this.state.q_circuit
+    let column_matrix = []
+    let gates = this.state.gates
+    let previous_gate
+    for (let i = 0; i < q_circuit[0].length ; i++) {
+      let tensor_product = 'temp'
+      for (let j = 0; j < q_circuit.length; j++){
+        if( (q_circuit[j][i] == 'cnc' || q_circuit[j ][i] == 'czc' || q_circuit[j ][i] == 'swc') || ( previous_gate== 'icnt' ||  previous_gate == 'iczt')){
           continue
         }
         if (tensor_product =='temp'){
-
-          tensor_product = this.state.gates[q_circuit[j][i]]
+          
+          tensor_product = gates[q_circuit[j][i]]
           continue
         }
         else{
-            tensor_product = nj.kron(tensor_product,this.state.gates[q_circuit[j][i]])
+          tensor_product = math.kron(tensor_product,gates[q_circuit[j][i]])
         }
       column_matrix.push(tensor_product)
+      previous_gate = q_circuit[j][i]
       }
+
     }
 
-    circuit_matrix = 'temp'
+    let circuit_matrix = 'temp'
 
     for (let i = 0; i < column_matrix.length; i++) {
       if (i == 0){
         circuit_matrix = column_matrix[i]
       }
       else{
-          circuit_matrix = nj.dot(circuit_matrix , column_matrix[i])
+          circuit_matrix = math.dot(circuit_matrix , column_matrix[i])
       }
     }
-    this.state.setState({circuit_matrix : circuit_matrix})
+    this.setState({circuit_matrix : circuit_matrix})
   }
 
   getInputVector = () => {
@@ -165,14 +173,30 @@ export default class CreateScreen extends React.Component{
   return (
     <View style={styles.container}>
       <View>
-        <Text>{this.state.q_circuit}</Text>
-        <TouchableOpacity onPress={() => {
-          this.addGate('h' , 1, this.state.q_circuit[0].length -1)
-        }}>
-          <View style={styles.gateButton}>
-            <Text style={styles.gateButtonText}>H</Text>
-          </View>
-        </TouchableOpacity>
+        <TextInput maxLength={2} style={styles.input} onEndEditing={(qreg_no) => {
+          this.setState({qreg_no})
+          this.q_circuit_initialization()
+        
+        }} />
+        <Text style={styles.test_text}>{this.state.q_circuit}</Text>
+        <Text style={styles.test_text}>{this.state.circuit_matrix}</Text>
+      
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity onPress={() => {
+            this.addGate('h' , 0, 0)
+          }}>
+            <View style={styles.gateButton}>
+              <Text style={styles.gateButtonText}>H</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+            this.addGate('x' , 0, 0)
+          }}>
+            <View style={styles.gateButton}>
+              <Text style={styles.gateButtonText}>X</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -195,5 +219,18 @@ const styles = StyleSheet.create({
   gateButtonText : {
     fontSize : 20,
     color : 'white'
+  },
+  test_text :{
+    fontSize : 15,
+    margin : 10
+  },
+  buttonContainer :{
+    width : '100%',
+    justifyContent : 'space-around',
+    backgroundColor : 'red',
+    
+  },
+  input: {
+    backgroundColor : 'lightblue'
   }
 });
