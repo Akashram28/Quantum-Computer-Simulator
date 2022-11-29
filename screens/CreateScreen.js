@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList , TouchableOpacity , TextInput } from 'react-native';
 import nj from "@d4c/numjs"
 import * as math from 'mathjs'
-import { typeOf } from 'mathjs';
+import {  typeOf } from 'mathjs';
 
 export default class CreateScreen extends React.Component{
 
@@ -11,6 +11,8 @@ export default class CreateScreen extends React.Component{
     this.state = {
       q_regs : 2,
       reg_length : 5,
+      row_no : 0,
+      column_no : 0,
       input_data : [], 
       q_circuit : [],
       circuit_matrix : [],
@@ -35,14 +37,15 @@ export default class CreateScreen extends React.Component{
   }
 
   componentDidMount(){
-    this.q_circuit_initialization()
+    this.q_circuit_initialization(this.state.q_regs)
   }
 
-  q_circuit_initialization = () => {
-    let q_circuit = this.state.q_circuit
-    for (let i = 0; i < this.state.q_regs; i++) {
+  q_circuit_initialization = (q_regs) => {
+    let q_circuit = []
+    for (let i = 0; i < q_regs; i++) {
       q_circuit.push(['i'])
     }
+    console.log(q_circuit)
     this.setState({q_circuit})
     this.setState({circuit_matrix : []})
   }
@@ -67,10 +70,11 @@ export default class CreateScreen extends React.Component{
 
   addGate = (gate,reg_no,pos) => {
     let q_circuit = this.state.q_circuit
-    let qreg_no = this.state.q_regs
+    let q_regs = this.state.q_regs
     let previous_gate
-    if (reg_no >= qreg_no){
+    if (reg_no >= q_regs){
       console.log('Register number is too big.')
+      return 0
     }
     if (pos >= q_circuit[reg_no].length){
       pos = q_circuit[reg_no].length
@@ -80,7 +84,7 @@ export default class CreateScreen extends React.Component{
       q_circuit[reg_no][pos] = gate
 
     }
-    if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') && reg_no == qreg_no-1)){
+    if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') && reg_no == q_regs-1)){
         console.log('This gate cannot be applied at this register.')
     }
     for (let i = 0; i < q_circuit[reg_no].length; i++) {
@@ -114,6 +118,7 @@ export default class CreateScreen extends React.Component{
       }
     }
     this.setState({q_circuit : q_circuit})
+    this.setState({row_no : 0, column_no : 0})
     this.getMatrix()
   }
   
@@ -129,27 +134,29 @@ export default class CreateScreen extends React.Component{
           continue
         }
         if (tensor_product =='temp'){
-          
           tensor_product = gates[q_circuit[j][i]]
-          continue
         }
         else{
           tensor_product = math.kron(tensor_product,gates[q_circuit[j][i]])
         }
-      column_matrix.push(tensor_product)
-      previous_gate = q_circuit[j][i]
+        previous_gate = q_circuit[j][i]
       }
+      console.log(tensor_product)
+      column_matrix.push(tensor_product)
+      
 
     }
 
     let circuit_matrix = 'temp'
-
+    
     for (let i = 0; i < column_matrix.length; i++) {
+      
       if (i == 0){
         circuit_matrix = column_matrix[i]
       }
       else{
-          circuit_matrix = math.dot(circuit_matrix , column_matrix[i])
+        console.log(circuit_matrix , column_matrix[i])
+        circuit_matrix = math.dotMultiply(circuit_matrix , column_matrix[i])
       }
     }
     this.setState({circuit_matrix : circuit_matrix})
@@ -172,10 +179,9 @@ export default class CreateScreen extends React.Component{
   render(){
   return (
     <View style={styles.container}>
-      <View>
-        <TextInput maxLength={2} style={styles.input} onEndEditing={(qreg_no) => {
-          this.setState({qreg_no})
-          this.q_circuit_initialization()
+        <TextInput maxLength={2} style={styles.input} onEndEditing={(q_regs) => {
+          this.setState({q_regs : parseInt(q_regs.nativeEvent.text)})
+          this.q_circuit_initialization(parseInt(q_regs.nativeEvent.text))
         
         }} />
         <Text style={styles.test_text}>{this.state.q_circuit}</Text>
@@ -183,21 +189,29 @@ export default class CreateScreen extends React.Component{
       
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={() => {
-            this.addGate('h' , 0, 0)
+            this.addGate('h' , this.state.row_no, this.state.column_no)
           }}>
             <View style={styles.gateButton}>
               <Text style={styles.gateButtonText}>H</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {
-            this.addGate('x' , 0, 0)
+            this.addGate('x' , this.state.row_no, this.state.column_no)
           }}>
             <View style={styles.gateButton}>
               <Text style={styles.gateButtonText}>X</Text>
             </View>
           </TouchableOpacity>
         </View>
-      </View>
+        <View style={styles.temp_field}>
+          <TextInput maxLength={2} style={styles.input} onEndEditing={(row_no) => {
+            this.setState({row_no : parseInt(row_no.nativeEvent.text)})
+          }} />
+          <TextInput maxLength={2} style={styles.input} onEndEditing={(column_no) => {
+            this.setState({column_no : parseInt(column_no.nativeEvent.text)})
+          }} />
+        </View>
+      
     </View>
   );
   }
@@ -225,12 +239,21 @@ const styles = StyleSheet.create({
     margin : 10
   },
   buttonContainer :{
+    flexDirection : 'row',
     width : '100%',
     justifyContent : 'space-around',
-    backgroundColor : 'red',
+
     
   },
   input: {
-    backgroundColor : 'lightblue'
+    backgroundColor : 'lightblue',
+    width : 60,
+    height : 40,
+    margin : 10
+  },
+  temp_field : {
+    flexDirection : 'row',
+    justifyContent : 'space-around',
+    width : '100%'
   }
 });
