@@ -13,11 +13,11 @@ export default class CreateScreen extends React.Component{
       reg_length : 5,
       row_no : 0,
       column_no : 0,
-      input_data : [], 
       q_circuit : [],
       circuit_matrix : [],
       input_vector : [],
       output_vector : [],
+      flatlist_data : [],
       gates : {
         'h'  : [[0.7,0.7] , [0.7,-0.7]],
         'cnt' : [[1,0,0,0], [0,1,0,0] , [0,0,0,1] , [0,0,1,0]],
@@ -31,7 +31,7 @@ export default class CreateScreen extends React.Component{
         'iczc': [[1,0,0,0], [0,1,0,0] , [0,0,1 ,0] , [0,0,0,-1]],
         'y'  : [[0,math.complex(0,-1)] , [math.complex(0,1),0]],
         'i'  : [[1,0] , [0,1]]
-    }
+      }
 
     }
   }
@@ -43,11 +43,15 @@ export default class CreateScreen extends React.Component{
   q_circuit_initialization = (q_regs) => {
     let q_circuit = []
     for (let i = 0; i < q_regs; i++) {
-      q_circuit.push(['i'])
+      let temp = []
+      temp.push('i')
+      q_circuit.push(temp)
     }
-    console.log(q_circuit)
-    this.setState({q_circuit})
+    
     this.setState({circuit_matrix : []})
+    this.setState({q_circuit: q_circuit}, () => {this.getFlatlistData()})
+    
+    
   }
 
   getInputData = () => {
@@ -117,9 +121,10 @@ export default class CreateScreen extends React.Component{
         q_circuit[reg_no-1][pos] = 'i'
       }
     }
-    this.setState({q_circuit : q_circuit})
+    
     this.setState({row_no : 0, column_no : 0})
-    this.getMatrix()
+    this.setState({q_circuit : q_circuit} , () => {this.getMatrix()})
+    
   }
   
   getMatrix = () => {
@@ -141,7 +146,6 @@ export default class CreateScreen extends React.Component{
         }
         previous_gate = q_circuit[j][i]
       }
-      console.log(tensor_product)
       column_matrix.push(tensor_product)
       
 
@@ -174,11 +178,36 @@ export default class CreateScreen extends React.Component{
     output_vector = nj.tensordot(this.state.input_vector,this.state.circuit_matrix,axes = 1)
   }
   
+  getFlatlistData = () => {
+    let q_circuit = this.state.q_circuit
+    let flatlist_data = []
+    for (let i = 0; i < q_circuit.length; i++) {
+      flatlist_data.push(
+        {
+          'id' : "q" + i.toString(),
+          'gates' : q_circuit[i]
+        }
+      )
+    }
+    this.setState({flatlist_data : flatlist_data})
+    
+  }
 
 
   render(){
   return (
     <View style={styles.container}>
+      <FlatList style={styles.flat_list}
+        data={this.state.flatlist_data}
+        renderItem={({item}) => {
+          return(
+          <View style={styles.reg_container}>
+            <Text>{item.id}</Text>
+          </View>
+          )
+        }}
+        keyExtractor={item => item.id}
+      />
         <TextInput maxLength={2} style={styles.input} onEndEditing={(q_regs) => {
           this.setState({q_regs : parseInt(q_regs.nativeEvent.text)})
           this.q_circuit_initialization(parseInt(q_regs.nativeEvent.text))
@@ -223,6 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop : 20
   },
   gateButton : {
     borderWidth : 2,
@@ -242,8 +272,6 @@ const styles = StyleSheet.create({
     flexDirection : 'row',
     width : '100%',
     justifyContent : 'space-around',
-
-    
   },
   input: {
     backgroundColor : 'lightblue',
@@ -255,5 +283,17 @@ const styles = StyleSheet.create({
     flexDirection : 'row',
     justifyContent : 'space-around',
     width : '100%'
+  },
+  flat_list : {
+    width : '90%',
+    backgroundColor : 'red',
+    padding : 10
+  },
+  reg_container : {
+    backgroundColor : '#FFFFF8',
+    padding : 10,
+    borderRadius : 10,
+    width : '100%',
+    marginVertical : 2
   }
 });
