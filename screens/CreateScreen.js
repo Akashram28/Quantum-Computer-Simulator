@@ -80,13 +80,15 @@ export default class CreateScreen extends React.Component{
       console.log('Register number is too big.')
       return 0
     }
-    if (pos >= q_circuit[reg_no].length){
+    if(pos ==q_circuit[reg_no].length){
+      q_circuit[reg_no].push(gate)
+    }
+    else if (pos > q_circuit[reg_no].length){
       pos = q_circuit[reg_no].length
     } 
     else if (pos < q_circuit[reg_no].length){
       previous_gate = q_circuit[reg_no][pos]
       q_circuit[reg_no][pos] = gate
-
     }
     if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') && reg_no == q_regs-1)){
         console.log('This gate cannot be applied at this register.')
@@ -163,7 +165,7 @@ export default class CreateScreen extends React.Component{
         circuit_matrix = math.dotMultiply(circuit_matrix , column_matrix[i])
       }
     }
-    this.setState({circuit_matrix : circuit_matrix})
+    this.setState({circuit_matrix : circuit_matrix},() => this.getFlatlistData())
   }
 
   getInputVector = () => {
@@ -182,10 +184,19 @@ export default class CreateScreen extends React.Component{
     let q_circuit = this.state.q_circuit
     let flatlist_data = []
     for (let i = 0; i < q_circuit.length; i++) {
+      let gates = []
+      for (let j = 0; j < q_circuit[i].length; j++) {
+        gates.push(
+          {
+            'id' : i.toString() + "," + j.toString(),
+            'name' : q_circuit[i][j],
+          }
+        )
+      }
       flatlist_data.push(
         {
           'id' : "q" + i.toString(),
-          'gates' : q_circuit[i]
+          'gates' : gates
         }
       )
     }
@@ -203,6 +214,15 @@ export default class CreateScreen extends React.Component{
           return(
           <View style={styles.reg_container}>
             <Text>{item.id}</Text>
+            <FlatList 
+              data={item.gates}
+              renderItem={gates => {
+                return(
+                <Text>{gates.item.name}</Text>
+                )
+              }}
+              keyExtractor={gates => gates.id}
+            />
           </View>
           )
         }}
@@ -290,6 +310,7 @@ const styles = StyleSheet.create({
     padding : 10
   },
   reg_container : {
+    flexDirection : 'row',
     backgroundColor : '#FFFFF8',
     padding : 10,
     borderRadius : 10,
