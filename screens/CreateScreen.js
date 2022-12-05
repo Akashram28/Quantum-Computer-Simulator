@@ -76,6 +76,9 @@ export default class CreateScreen extends React.Component{
     let q_circuit = this.state.q_circuit
     let q_regs = this.state.q_regs
     let previous_gate
+    console.log(reg_no,q_circuit.length)
+    console.log(pos,q_circuit[reg_no].length)
+    console.log(q_circuit)
     if (reg_no >= q_regs){
       console.log('Register number is too big.')
       return 0
@@ -93,7 +96,8 @@ export default class CreateScreen extends React.Component{
     if (((gate == 'cnt' || gate == 'czt' || gate == 'swt') && reg_no == 0) || ((gate == 'icnt' && gate== 'iczt') && reg_no == q_regs-1)){
         console.log('This gate cannot be applied at this register.')
     }
-    for (let i = 0; i < q_circuit[reg_no].length; i++) {
+    for (let i = 0; i < q_circuit.length; i++) {
+      console.log(i,q_circuit[i])
       if (q_circuit[i].length < q_circuit[reg_no].length){
            q_circuit[i].push('i')
       }
@@ -216,6 +220,7 @@ export default class CreateScreen extends React.Component{
             <Text>{item.id}</Text>
             <FlatList 
               data={item.gates}
+              horizontal={true}
               renderItem={gates => {
                 return(
                 <Text>{gates.item.name}</Text>
@@ -228,7 +233,7 @@ export default class CreateScreen extends React.Component{
         }}
         keyExtractor={item => item.id}
       />
-        <TextInput maxLength={2} style={styles.input} onEndEditing={(q_regs) => {
+        <TextInput maxLength={2} defaultValue={2} style={styles.input} onEndEditing={(q_regs) => {
           this.setState({q_regs : parseInt(q_regs.nativeEvent.text)})
           this.q_circuit_initialization(parseInt(q_regs.nativeEvent.text))
         
@@ -253,11 +258,11 @@ export default class CreateScreen extends React.Component{
           </TouchableOpacity>
         </View>
         <View style={styles.temp_field}>
-          <TextInput maxLength={2} style={styles.input} onEndEditing={(row_no) => {
-            this.setState({row_no : parseInt(row_no.nativeEvent.text)})
+          <TextInput maxLength={2} style={styles.input} onChangeText={(row_no) => {
+            this.setState({row_no : parseInt(row_no)})
           }} />
-          <TextInput maxLength={2} style={styles.input} onEndEditing={(column_no) => {
-            this.setState({column_no : parseInt(column_no.nativeEvent.text)})
+          <TextInput maxLength={2} style={styles.input} onChangeText={(column_no) => {
+            this.setState({column_no : parseInt(column_no)})
           }} />
         </View>
       
