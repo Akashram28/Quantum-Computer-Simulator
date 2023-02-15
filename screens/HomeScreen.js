@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View ,TouchableOpacity ,Image} from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation'
 
 export default class HomeScreen extends React.Component{
 
@@ -8,6 +9,9 @@ export default class HomeScreen extends React.Component{
     this.state = {
       
     }
+  }
+  componentDidMount(){
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT)
   }
   
   render(){
