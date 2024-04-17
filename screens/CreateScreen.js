@@ -206,7 +206,7 @@ export default class CreateScreen extends React.Component{
       
 
     }
-
+    
     let circuit_matrix = 'temp'
     
     for (let i = 0; i < column_matrix.length; i++) {
@@ -220,6 +220,7 @@ export default class CreateScreen extends React.Component{
         //-----------MAYBE THIS SHOULD BE dot ONly---------------------//
       }
     }
+    // console.log(circuit_matrix)
     this.setState({circuit_matrix : circuit_matrix},() => this.getFlatlistData())
   }
 
@@ -353,13 +354,13 @@ export default class CreateScreen extends React.Component{
           
           tensor_product = math.kron(tensor_product,gates[q_circuit[j][i]])
         }
-        previous_gate = q_circuit[j][i]
+        // previous_gate = q_circuit[j][i]
       }
       column_matrix.push(tensor_product)
       
 
     }
-
+    // console.log(column_matrix)
     let circuit_matrix = 'temp'
     
     for (let i = 0; i < column_matrix.length; i++) {
@@ -373,6 +374,8 @@ export default class CreateScreen extends React.Component{
         //-----------MAYBE THIS SHOULD BE dot ONly---------------------//
       }
     }
+    // console.log(circuit_matrix)
+    // console.log(circuit_matrix)
     let flatlist_data = []
     for (let i = 0; i < q_circuit.length; i++) {
       let gates = []
@@ -403,9 +406,9 @@ export default class CreateScreen extends React.Component{
       newInput_vector.push(input_vector[i])
     }
     input_vector = newInput_vector
-    let output_vector = nj.dot(this.state.input_vector,this.state.circuit_matrix)
+    let output_vector = nj.dot(input_vector,circuit_matrix)
     output_vector = output_vector.tolist()
-
+    
     let digits = this.state.q_regs
     let data = []
     for (let i = 0; i < 2**digits; i++) {
